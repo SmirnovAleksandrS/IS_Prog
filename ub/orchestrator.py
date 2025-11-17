@@ -80,6 +80,35 @@ class Orchestrator:
             self.serial_config['baudrate'],
             self.serial_config['timeout_s']
         ) as link:
+            # Wait for Arduino to reset and initialize (DTR reset)
+            print("⏳ Ожидание инициализации стенда...")
+            time.sleep(2.5)  # Arduino resets when serial opens
+            
+            # Flush any startup noise
+            link.flush_input()
+            
+            # Test connectivity with PING
+            print("🏓 Проверка связи...")
+            try:
+                ping_frame = encode_frame(MessageType.PING, b'')
+                link.write(ping_frame)
+                time.sleep(0.2)
+                
+                ping_buffer = bytearray()
+                data = link.read_available()
+                if data:
+                    ping_buffer.extend(data)
+                    frames = decode_stream(ping_buffer)
+                    pong_received = any(ft == MessageType.PONG for ft, _ in frames)
+                    if pong_received:
+                        print("✅ Стенд отвечает")
+                    else:
+                        print("⚠️  Не получен PONG, продолжаем...")
+                else:
+                    print("⚠️  Нет ответа на PING, продолжаем...")
+            except Exception as e:
+                print(f"⚠️  Ошибка PING: {e}")
+            
             # Open event store
             with EventStoreJSONL(self.storage_config['jsonl_path']) as store:
                 # Main campaign loop
@@ -223,7 +252,7 @@ class Orchestrator:
         start = time.time()
         buffer = bytearray()
         
-        while time.time() - start < 1.0:
+        while time.time() - start < 2.0:  # Increased timeout to 2 seconds
             data = link.read_available()
             if data:
                 buffer.extend(data)
@@ -232,10 +261,13 @@ class Orchestrator:
                     if frame_type == MessageType.ACK:
                         return
                     elif frame_type == MessageType.NACK:
-                        raise RuntimeError("Получен NACK от стенда")
+                        raise RuntimeError(f"Получен NACK от стенда на {msg_type.name}")
             time.sleep(0.01)
         
-        # Timeout - proceed anyway (research mode, fail soft)
+        # Timeout - log warning but proceed (research mode)
+        # Don't raise exception to allow campaign to continue
+        import sys
+        print(f"⚠️  Тайм-аут ACK для {msg_type.name}", file=sys.stderr)
     
     def _wait_for_trigger(self, link: SerialLink, timeout_ms: int) -> bool:
         """Wait for trigger to be seen."""

@@ -63,7 +63,7 @@ class Observation(BaseModel):
     raw_status: Dict[str, Any]          # whatever stand returns
     trigger_seen: bool
     trigger_cleared: bool
-    led_state: Optional[Literal["ON", "OFF"]] = None
+    led_state: Optional[Literal["ON", "OFF", "BLINK"]] = None
     notes: Optional[str] = None
 
 

@@ -1,0 +1,50 @@
+# Test configuration with reduced trials
+app:
+  run_name: "arduino_test"
+  seed: 42
+  artifacts_dir: "./runs/arduino_test"
+
+serial:
+  port: "COM10"     # change to your actual port
+  baudrate: 115200
+  timeout_s: 0.5
+
+protocol:
+  sof_hex: "0x7E"
+  use_len1_byte: true
+  crc32_poly: "0xEDB88320"
+
+campaign:
+  max_trials: 20  # Reduced for testing
+  reset_policy: "soft"
+  safety_pause_ms: 10
+  trigger:
+    kind: "GPIO_LEVEL"
+    edge: "rising"
+    timeout_ms: 200
+  attack:
+    mode: "CLOCK_GLITCH"
+    clock_impl: "COMPRESS"
+    concurrent_power: false
+  strategy:
+    name: "grid"
+    params:
+      tg_ns: [100, 80, 64, 50, 40, 28, 20, 16]  # Reduced range
+      delay_ns: {start: 0, stop: 500, step: 100}  # Smaller range
+      repeats_per_point: 1  # No repeats for quick test
+
+storage:
+  jsonl_path: "./runs/arduino_test/events.jsonl"
+  sqlite_path: "./runs/arduino_test/results.sqlite"
+
+viz:
+  live: false
+  make_heatmap: true
+  heatmap_metric: "success_rate"
+  output_dir: "./runs/arduino_test/viz"
+
+advanced:
+  power_glitch: {enabled: false, type: "DOWN", dV_mV: 250, width_ns: 60, delay_ns: 100}
+  whitebox: {enabled: false, avr_listing_path: null}
+  bayes: {enabled: false}
+  bandit: {enabled: false}

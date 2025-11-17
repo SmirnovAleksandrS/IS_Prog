@@ -27,3 +27,8 @@ runs/
 # OS
 .DS_Store
 Thumbs.db
+
+*depr_spec
+
+.qoder
+.tasks

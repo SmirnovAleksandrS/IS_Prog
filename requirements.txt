@@ -2,3 +2,4 @@ pyserial>=3.5
 pydantic>=2.0.0
 matplotlib>=3.5.0
 pyyaml>=6.0
+platformio

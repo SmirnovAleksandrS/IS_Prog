@@ -87,15 +87,24 @@ def save_heatmap(trials: List[Trial], outdir: str, metric: str = "success_rate")
     ax.set_xlabel('Задержка (нс)', fontsize=12)
     ax.set_ylabel('Tg (нс)', fontsize=12)
     
-    # Set ticks
-    ax.set_xticks(np.arange(len(delay_values)))
+    # Set ticks with limited clutter on the delay axis
     ax.set_yticks(np.arange(len(tg_values)))
-    ax.set_xticklabels(delay_values)
     ax.set_yticklabels(tg_values)
-    
-    # Rotate x labels if too many
-    if len(delay_values) > 20:
-        plt.setp(ax.get_xticklabels(), rotation=45, ha='right', rotation_mode='anchor')
+
+    max_delay_ticks = 12
+    delay_indices = np.arange(len(delay_values))
+
+    if len(delay_values) > max_delay_ticks:
+        # Show only a subset of delays to avoid overlapping labels
+        step = int(np.ceil(len(delay_values) / max_delay_ticks))
+        visible_indices = delay_indices[::step]
+        ax.set_xticks(visible_indices)
+        ax.set_xticklabels([delay_values[idx] for idx in visible_indices], rotation=45, ha='right')
+    else:
+        ax.set_xticks(delay_indices)
+        ax.set_xticklabels(delay_values)
+        if len(delay_values) > 8:
+            plt.setp(ax.get_xticklabels(), rotation=30, ha='right')
     
     # Add colorbar
     cbar = plt.colorbar(im, ax=ax)
