@@ -40,6 +40,7 @@ else if (in_valid)
     
 
 reg in_last_ff;
+reg in_last_ff_2;
 
 always @(posedge CLK)
 if (RST)
@@ -48,7 +49,17 @@ else
     in_last_ff <= in_last && in_valid;
 
 
-assign out_valid =           in_last_ff;
+always @(posedge CLK)
+if (RST)
+    in_last_ff_2 <= 0;
+else
+    in_last_ff_2 <= in_last_ff ? 1 :
+                    out_valid  ? 0 :
+                      in_last_ff_2 ;
+
+
+
+assign out_valid = in_last_ff_2 && !in_valid;
 assign o_crc     =     crc_ff ^ max_val;
 
 
