@@ -27,3 +27,7 @@ runs/
 # OS
 .DS_Store
 Thumbs.db
+
+#verilog sim
+*.vcd
+*.out
