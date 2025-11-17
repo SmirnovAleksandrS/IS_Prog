@@ -5,7 +5,7 @@ app:
   artifacts_dir: "./runs/avr_password_bypass_baseline"
 
 serial:
-  port: "COM5"     # change to your actual port
+  port: "COM10"     # change to your actual port
   baudrate: 115200
   timeout_s: 0.5
 
