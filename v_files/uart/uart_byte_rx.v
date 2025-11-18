@@ -11,6 +11,7 @@ module uart_byte_rx
     input  wire                        in_bit,
     input  wire                        init_frame,
 
+    output wire                        last_bit,
     output wire                        useful_in_bit,
     output wire                        msg_err,
     output reg                         out_valid,
@@ -27,7 +28,7 @@ localparam CNT_SIZE = $clog2(BYTE_SIZE);
 
 reg [2 - 1 : 0] state;
 
-wire last_bit;
+// wire last_bit;
 wire start_correct = (in_bit == 1'b0) && (state == ST_START);
 
 reg  [BYTE_SIZE - 1 : 0] shift_reg;
@@ -35,7 +36,7 @@ wire [BYTE_SIZE - 1 : 0] data;
 reg  [CNT_SIZE  - 1 : 0] cnt;
 
 
-
+assign useful_in_bit = (state == ST_DATA);
 
 ////////////////////////////////////////////////////////////
 /// data load
@@ -94,7 +95,10 @@ else
 /// error processing
 ////////////////////////////////////////////////////////////
 
-assign msg_err = (in_bit == 1'b1) && (state == ST_START); 
+// assign msg_err = (in_bit == 1'b1) && (state == ST_START); 
+
+assign msg_err = 1'b0;
+
 wire high_bit =  (in_bit == 1'b1);
 wire start_st =  (state == ST_START);
 

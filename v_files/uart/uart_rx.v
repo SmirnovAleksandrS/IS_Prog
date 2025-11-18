@@ -33,6 +33,9 @@ localparam ST_CHECK_CSM = 5;
 reg [3 - 1 : 0] state;
 reg [FULL_DATA_SIZE - 1 : 0] useful_data;
 
+
+
+wire   last_bit_in_byte;
 wire   init_en;
 assign init_en = (state == ST_INIT);
 
@@ -71,17 +74,18 @@ uart_byte_rx
 )
 uart_byte_rx
 (
-    .CLK           ( CLK           ),
-    .RST           ( RST           ),
-    .en            ( 1'b1          ),
+    .CLK           ( CLK              ),
+    .RST           ( RST              ),
+    .en            ( 1'b1             ),
 
-    .in_bit        ( in_bit        ),
-    .useful_in_bit ( useful_in_bit ),
-    .init_frame    ( init_frame    ),
+    .in_bit        ( in_bit           ),
+    .useful_in_bit ( useful_in_bit    ),
+    .init_frame    ( init_frame       ),
     
-    .msg_err       ( msg_lost      ),
-    .out_valid     ( byte_valid    ),
-    .out_data      ( cur_byte      )
+    .last_bit      ( last_bit_in_byte ),
+    .msg_err       ( msg_lost         ),
+    .out_valid     ( byte_valid       ),
+    .out_data      ( cur_byte         )
 );
 
 
@@ -172,6 +176,10 @@ else
 localparam CSM_BYTE_NUM = 4;
 wire  check_end;
 wire  frame_end;
+wire   csm_last;
+
+assign csm_last = last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ); /// end with data
+// assign csm_last = last_bit_in_byte && (state == ST_CSM ) && (shift_val == CSM_BYTE_NUM );  /// ends with csm
 
 assign data_end  = (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
 assign frame_end = (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
@@ -185,6 +193,7 @@ wire msg_lost;
 ////////////////////////////////////////////////////////////
 
 reg [CSM_SIZE - 1 : 0] csm;
+reg [CSM_SIZE - 1 : 0] csm_tmp_ff;
 
 always @(posedge CLK)
 if (RST)
@@ -222,18 +231,29 @@ crc_32
     .RST       ( RST         ),
 
     .in_valid  ( csm_calc_en ),
-    .in_last   ( check_end   ),
+    .in_last   ( csm_last    ),
     .in_bit    ( in_bit      ),
 
     .out_valid ( csm_tmp_valid   ),
     .o_crc     ( csm_tmp     )
 );
 
-wire msg_err;
-assign check_end = csm_tmp_valid;
+always @(posedge CLK)
+if (RST)
+    csm_tmp_ff <= 0;
 
-assign csm_matching = (csm == csm_tmp) && (state == ST_CSM);
-assign msg_err = msg_lost || csm_matching;
+else if (state == ST_INIT)
+    csm_tmp_ff <= 0;
+
+else 
+    csm_tmp_ff <= csm_tmp_valid ? csm_tmp : csm_tmp_ff; 
+
+wire msg_err;
+// assign check_end = csm_tmp_valid;
+assign check_end = (state == ST_CHECK_CSM);
+
+assign csm_matching = (csm == csm_tmp_ff) && (state == ST_CHECK_CSM);
+assign msg_err = msg_lost /*|| (!csm_matching && csm_tmp_valid) */;
 
 
 ////////////////////////////////////////////////////////////

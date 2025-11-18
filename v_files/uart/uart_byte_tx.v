@@ -12,6 +12,7 @@ module uart_byte_tx
     input  wire [BYTE_SIZE - 1 : 0]  in_data,
     input  wire                     in_valid,
 
+    output wire                     last_bit,
     output wire                   out_useful,
     output wire                    out_valid,
     output wire                        ready,

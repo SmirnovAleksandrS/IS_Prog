@@ -30,6 +30,7 @@ localparam ST_OPT      = 3;
 localparam ST_DATA     = 4;
 localparam ST_WAIT_CSM = 5;
 localparam ST_CSM      = 6;
+localparam ST_WAIT_END = 7;
 
 
 /// datactrl parameters
@@ -58,10 +59,11 @@ reg [BYTE_SIZE        - 1 : 0] cur_data_byte;
 /// general ctrl signals
 wire init_en;
 wire data_end; 
-wire frame_end;
+wire final_byte;
 
 wire in_hshake;
 wire next_b_valid;
+wire last_of_byte;
 
 reg  out_bit_ff;
 
@@ -69,7 +71,6 @@ reg  out_bit_ff;
 wire [USEFUL_DATA_SIZE - 1 : 0] shifted_useful_data;
 wire [BYTE_SIZE        - 1 : 0]            init_msg;
 wire [BYTE_SIZE        - 1 : 0]           next_byte;
-
 /// shift of long data for byte destribution
 reg [SHIFT_VAL_SIZE - 1 : 0] shift_val;
 wire final_data_shift;
@@ -119,13 +120,15 @@ end
 ////////////////////////////////////////////////////////////
 /// general signals loading
 ////////////////////////////////////////////////////////////
-assign init_en = (state == ST_NO_DATA) && in_hshake;
+assign init_en    = (state == ST_NO_DATA) && in_hshake;
 
-assign init_msg = {{(BYTE_SIZE - 1){1'b1}}, 1'b0};
+assign init_msg   = {{(BYTE_SIZE - 1){1'b1}}, 1'b0};
 
-assign data_end = final_data_shift && in_byte_hshake;
+assign data_end   = final_data_shift && in_byte_hshake;
 
-assign frame_end = final_csm_shift && (state == ST_CSM) && in_byte_hshake;
+assign final_byte = final_csm_shift && (state == ST_CSM) && in_byte_hshake;
+
+assign frame_end  = (state == ST_WAIT_END) && tx_byte_ready;
 ////////////////////////////////////////////////////////////
 /// shiting big data logic
 ////////////////////////////////////////////////////////////
@@ -160,8 +163,8 @@ assign next_byte = ( state == ST_NO_DATA  )                        && in_hshake 
                    ( state == ST_INIT     )                        && in_byte_hshake              ? msg_opt       :
                    ( state == ST_LEN      )                        && in_byte_hshake              ? msg_len       :
                    ((state == ST_OPT      ) || (state == ST_DATA)) && in_byte_hshake              ? cur_data_byte :
-                   ( state == ST_WAIT_CSM ) || (state == ST_CSM )  && in_byte_hshake          ? cur_csm_byte  :
-                                                                            {BYTE_SIZE{1'b1}}  ;
+                   ( state == ST_WAIT_CSM ) || (state == ST_CSM )  && in_byte_hshake              ? cur_csm_byte  :
+                                                                                               {BYTE_SIZE{1'b1}}  ;
 
 
 // assign next_b_valid   = ((in_byte_hshake /*&& !data_end*/) || csm_valid) && (state != ST_NO_DATA) || in_hshake ;
@@ -169,7 +172,7 @@ assign next_b_valid = (state != ST_NO_DATA) && (state != ST_WAIT_CSM) || csm_val
 assign in_byte_hshake = tx_byte_ready && next_b_valid;
 
 
-
+assign last_csm_bit = last_of_byte && (state == ST_WAIT_CSM);
 uart_byte_tx
 #(
     .BYTE_SIZE ( BYTE_SIZE )
@@ -185,6 +188,7 @@ uart_byte_tx
     .in_valid   ( next_b_valid  ),
     .ready      ( tx_byte_ready ),
 
+    .last_bit   ( last_of_byte  ),
     .out_useful ( useful_bit    ),
     .out_valid  ( new_bit_valid ),
     .o_bit      ( out_bit_slow  )
@@ -198,7 +202,7 @@ else
     out_bit_ff <= out_bit_slow;
 
 
-assign out_bit = (state == ST_CSM) ? out_bit_slow : out_bit_ff;
+assign out_bit = ((state == ST_CSM) || (state == ST_WAIT_END)) ? out_bit_slow : out_bit_ff;
 
 
 
@@ -240,7 +244,8 @@ crc_32
     .RST       ( RST          ),
 
     .in_valid  ( csm_calc_en  ),
-    .in_last   ( data_end     ),
+    // .in_last   ( data_end     ),
+    .in_last   ( last_csm_bit ),
     .in_bit    ( out_bit_slow ),
 
     .out_valid ( csm_valid    ),
@@ -294,8 +299,10 @@ else if (state == ST_WAIT_CSM)
     state <= csm_valid ? ST_CSM : state;    
 
 else if (state == ST_CSM)
-    state <= frame_end ? ST_NO_DATA : state;    
+    state <= final_byte ? ST_WAIT_END : state;    
 
+else if (state == ST_WAIT_END)
+    state <= frame_end ? ST_NO_DATA : state;    
 else 
     state <= state;
 

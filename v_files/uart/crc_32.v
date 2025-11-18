@@ -59,8 +59,10 @@ else
 
 
 
-assign out_valid = in_last_ff_2 && !in_valid;
-assign o_crc     =     crc_ff ^ max_val;
+// assign out_valid = in_last_ff_2 && !in_valid;
+
+assign out_valid =        in_last_ff;
+assign o_crc     =  crc_ff ^ max_val;
 
 
 endmodule
