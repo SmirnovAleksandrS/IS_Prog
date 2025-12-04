@@ -1,4 +1,4 @@
-module uart_rx
+module old_uart_rx
 #(
     parameter                             BYTE_SIZE     = 8,
     parameter                             MAX_MSG_LEN   = (1 << BYTE_SIZE) - 1,
