@@ -1,26 +1,23 @@
 module uart_rx
 #(
-    parameter                           BYTE_SIZE     = 8,
-    parameter                           MAX_MSG_LEN   = (1 << BYTE_SIZE) - 1,
-    parameter [0:0]                     BYTE_START_EN = 1,
-    parameter [0:0]                     BYTE_STOP_EN  = 0,
-    parameter                           OUT_DATA_SIZE = $clog2(MAX_MSG_LEN) * BYTE_SIZE
+    parameter                             BYTE_SIZE     = 8,
+    parameter                             MAX_MSG_LEN   = (1 << BYTE_SIZE) - 1,
+    parameter                             OUT_DATA_SIZE = $clog2(MAX_MSG_LEN) * BYTE_SIZE
 
 )
 (   
-    input  wire                         CLK,
-    input  wire                         RST,
-    input  wire                         in_bit,
+    input  wire                           CLK,
+    input  wire                           RST,
+    input  wire                           in_bit,
 
-    output wire [BYTE_SIZE     - 1 : 0] o_opt,
-    output wire [BYTE_SIZE     - 1 : 0] o_len,
-    output wire [OUT_DATA_SIZE - 1 : 0] o_data,
-    output wire                         o_valid
+    output wire [BYTE_SIZE     - 1 : 0]   o_opt,
+    output wire [BYTE_SIZE     - 1 : 0]   o_len,
+    output wire [OUT_DATA_SIZE - 1 : 0]   o_data,
+    output wire                           o_valid
 
 );
 
 localparam                                INIT_WIDTH     = 7;
-localparam                                REAL_BYTE_SIZE = BYTE_SIZE + BYTE_START_EN + BYTE_STOP_EN;
 
 localparam                                SHIFT_SIZE     = $clog2(MAX_MSG_LEN);
 localparam                                FULL_DATA_SIZE = $clog2(MAX_MSG_LEN) * BYTE_SIZE;

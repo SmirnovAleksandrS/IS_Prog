@@ -49,10 +49,8 @@ uart_tx
 
 uart_rx
 #(  
-    .BYTE_SIZE     ( BYTE_SIZE     ),
+    .BYTE_SIZE     ( BYTE_SIZE     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
-    .BYTE_START_EN ( 1 ),
-    .BYTE_STOP_EN  ( 0 )
 )
 uart_rx
 (
@@ -74,6 +72,27 @@ uart_rx
         in_valid <= 1;
         #4;
         in_valid <= 0;
+
+        #200;
+        in_valid  <= 1;
+        full_data <= 40'h00_02_aa_bb_47;
+        #4;
+        in_valid <= 0;
+
+        #80;
+        in_valid  <= 1;
+        full_data <= 40'h00_01_aa_bb_47;
+        #4;
+        in_valid <= 0;
+
+                #80;
+        in_valid  <= 1;
+        full_data <= 40'h00_00_aa_bb_47;
+        #4;
+        in_valid <= 0;
+
+
+
 
         #2000;
         $finish;
