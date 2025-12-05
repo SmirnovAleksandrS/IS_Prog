@@ -29,7 +29,7 @@ localparam CNT_SIZE = $clog2(BYTE_SIZE);
 reg [2 - 1 : 0] state;
 
 // wire last_bit;
-wire start_correct = (in_bit == 1'b0) && (state == ST_START);
+wire start_correct = (in_bit == 1'b0) && (state == ST_START) && en;
 
 reg  [BYTE_SIZE - 1 : 0] shift_reg;
 wire [BYTE_SIZE - 1 : 0] data;
@@ -47,7 +47,7 @@ if (RST)
     cnt <= 0;
 
 else if (!en)
-    cnt <= 0;
+    cnt <= cnt;
 
 else if (state == ST_DATA)
     cnt <= last_bit ? 0 : cnt + 1;
@@ -62,8 +62,11 @@ always @(posedge CLK)
 if (RST)
     shift_reg <= 0;
 
-else 
+else if (en)
     shift_reg <= {shift_reg[BYTE_SIZE-1 - 1 : 0], in_bit};
+
+else 
+    shift_reg <= shift_reg;
 
 
 ////////////////////////////////////////////////////////////
@@ -75,7 +78,7 @@ if (RST)
     state <= ST_NO_DATA;
 
 else if (!en)
-    state <= ST_NO_DATA;
+    state <= state;
 
 else if (state == ST_NO_DATA)
     state <= init_frame ? ST_START : state;

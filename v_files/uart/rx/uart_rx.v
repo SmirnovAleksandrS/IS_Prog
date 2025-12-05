@@ -18,7 +18,10 @@ module uart_rx
 
 );
 
-reg [FREQ_COEF - 1 : 0]                   baud_cnt;
+localparam                                CNT_SIZE = $clog2(FREQ_COEF);
+////////////////////////////////////////////////////////////////////////////
+
+reg [CNT_SIZE - 1 : 0]                    baud_cnt;
 wire                                      baud_en;
 
 reg                                       sync_ff_1;

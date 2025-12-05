@@ -111,9 +111,9 @@ uart_byte_rx
 (
     .CLK           ( CLK              ),
     .RST           ( RST              ),
-    .en            ( 1'b1             ),
+    .en            ( baud_en          ),
 
-    .in_bit        ( baud_en          ),
+    .in_bit        ( in_bit           ),
     .useful_in_bit ( useful_in_bit    ),
     .init_frame    ( init_frame       ),
     
@@ -132,8 +132,8 @@ always @(posedge CLK)
 if (RST)
     msg_len <= 0;
 
-else if (!baud_en)
-    msg_len <= msg_len;
+// else if (!baud_en)
+//     msg_len <= msg_len;
 
 else if (state == ST_LEN)
     msg_len <= byte_valid ? cur_byte : msg_len ;
@@ -150,8 +150,8 @@ always @(posedge CLK)
 if (RST)
     msg_opt <= 0;
 
-else if (!baud_en)
-    msg_opt <= msg_opt;
+// else if (!baud_en)
+//     msg_opt <= msg_opt;
 
 else if (state == ST_OPT)
     msg_opt <= byte_valid ? cur_byte : msg_opt ;
@@ -169,8 +169,8 @@ always @(posedge CLK)
 if (RST)
     shift_val <= 1;
 
-else if (!baud_en)
-    shift_val <= shift_val;
+// else if (!baud_en)
+//     shift_val <= shift_val;
 
 else if (state == ST_DATA)
     shift_val <= data_end   ?             1 :
@@ -203,8 +203,8 @@ always @(posedge CLK)
 if (RST)
     useful_data <= 0;
 
-else if (!baud_en)
-    useful_data <= useful_data;
+// else if (!baud_en)
+//     useful_data <= useful_data;
 
 
 else if (state == ST_DATA)
@@ -220,11 +220,11 @@ else
 
 
 
-assign csm_last  = baud_en && last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ); /// end with data
 // assign csm_last = last_bit_in_byte && (state == ST_CSM ) && (shift_val == CSM_BYTE_NUM );  /// ends with csm
 
-assign data_end  = baud_en && (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
-assign frame_end = baud_en && (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
+assign csm_last  = /*baud_en && */ last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ); /// end with data
+assign data_end  = /*baud_en && */ (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
+assign frame_end = /*baud_en && */ (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
 
 
 // assign msg_lost = (state == ST_INIT)
@@ -237,8 +237,8 @@ always @(posedge CLK)
 if (RST)
     csm <= 0;
 
-else if (!baud_en)
-    useful_data <= useful_data;
+// else if (!baud_en)
+//     useful_data <= useful_data;
 
 else if (state == ST_INIT)
     csm <= 0;
@@ -258,7 +258,7 @@ else
 
 
 
-assign csm_calc_en = baud_en && useful_in_bit && (state != ST_INIT);
+assign csm_calc_en = baud_en && useful_in_bit && (state != ST_INIT) && (state != ST_CSM);
 
 crc_32
 #(
@@ -281,8 +281,8 @@ always @(posedge CLK)
 if (RST)
     csm_tmp_ff <= 0;
 
-else if (!baud_en)
-    csm_tmp_ff <= csm_tmp_ff;
+// else if (!baud_en)
+//     csm_tmp_ff <= csm_tmp_ff;
 
 else if (state == ST_INIT)
     csm_tmp_ff <= 0;
@@ -291,10 +291,9 @@ else
     csm_tmp_ff <= csm_tmp_valid ? csm_tmp : csm_tmp_ff; 
 
 // assign check_end = csm_tmp_valid;
-assign check_end = baud_en && (state == ST_CHECK_CSM);
-
-assign csm_matching = baud_en && (csm == csm_tmp_ff) && (state == ST_CHECK_CSM);
-assign msg_err = baud_en && msg_lost /*|| (!csm_matching && csm_tmp_valid) */;
+assign check_end    = /*baud_en &&*/ (state == ST_CHECK_CSM);
+assign csm_matching = /*baud_en &&*/ (csm == csm_tmp_ff) && (state == ST_CHECK_CSM);
+assign msg_err      = /*baud_en &&*/ msg_lost /*|| (!csm_matching && csm_tmp_valid) */;
 
 assign o_valid = csm_matching;
 
@@ -306,8 +305,8 @@ always @(posedge CLK)
 if (RST)
     state <= ST_INIT;
 
-else if (!baud_en)
-    state <= state;
+// else if (!baud_en)
+//     state <= state;
 
 else if (msg_err)
     state <= ST_INIT;
