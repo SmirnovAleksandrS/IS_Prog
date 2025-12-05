@@ -14,6 +14,8 @@ reg opt;
 reg len;
 reg in_valid;
 reg slow_clk_tmp;
+wire tx_ready;
+
 
     always begin 
         #1 CLK      = ~CLK;
@@ -35,7 +37,8 @@ initial begin
     RST          <= 1;
 
 
-    full_data <= 40'h00_03_aa_bb_47;
+    // full_data <= 40'h00_03_aa_bb_47;
+    full_data <= 40'h01_00_00_00_00;
     in_valid  <= 0;
 
 
@@ -54,6 +57,7 @@ uart_tx
     .RST       ( RST       ),
     .full_data ( full_data ),
     .in_valid  ( in_valid  ),
+    .ready     ( tx_ready  ),
     .out_bit   ( out_bit   )
 );
 
@@ -79,29 +83,29 @@ uart_rx
     initial begin
 
 		$dumpfile("dump.vcd"); $dumpvars(0, test_tx);
-        #11;
+        #48;
         RST <= 0;
-        #6;
+        #24;
         in_valid <= 1;
-        #8;
+        #32;
         in_valid <= 0;
 
-        #200;
+        #800;
         in_valid  <= 1;
         full_data <= 40'h00_02_aa_bb_47;
-        #4;
+        #16;
         in_valid <= 0;
 
-        #80;
+        #320;
         in_valid  <= 1;
         full_data <= 40'h00_01_aa_bb_47;
-        #4;
+        #16;
         in_valid <= 0;
 
-                #80;
+                #160;
         in_valid  <= 1;
         full_data <= 40'h00_00_aa_bb_47;
-        #4;
+        #16;
         in_valid <= 0;
 
 

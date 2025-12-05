@@ -59,6 +59,7 @@ reg  [SHIFT_SIZE     - 1 : 0]             shift_val;
 reg  [FULL_DATA_SIZE - 1 : 0]             useful_data;
 reg  [BYTE_SIZE      - 1 : 0]             msg_opt;
 reg  [BYTE_SIZE      - 1 : 0]             msg_len;
+wire                                      empty_msg;
 
 
 /// csm signals
@@ -141,6 +142,20 @@ else if (state == ST_LEN)
 else 
     msg_len <= msg_len;
 
+assign empty_msg = (state == ST_LEN) && byte_valid && (cur_byte == 0);
+
+reg empty_msg_ff;
+always @(posedge CLK)
+if (RST)
+    empty_msg_ff <= 0;
+
+else if (empty_msg)
+    empty_msg_ff <= 1;
+
+else if ((state == ST_CHECK_CSM) || (state == ST_INIT))
+    empty_msg_ff <= 0;
+else 
+    empty_msg_ff <= empty_msg_ff;
 
 ////////////////////////////////////////////////////////////
 /// get msg_opt
@@ -222,7 +237,7 @@ else
 
 // assign csm_last = last_bit_in_byte && (state == ST_CSM ) && (shift_val == CSM_BYTE_NUM );  /// ends with csm
 
-assign csm_last  = /*baud_en && */ last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ); /// end with data
+assign csm_last  = /*baud_en && */ last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ) || empty_msg; /// end with data
 assign data_end  = /*baud_en && */ (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
 assign frame_end = /*baud_en && */ (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
 
@@ -288,7 +303,7 @@ else if (state == ST_INIT)
     csm_tmp_ff <= 0;
 
 else 
-    csm_tmp_ff <= csm_tmp_valid ? csm_tmp : csm_tmp_ff; 
+    csm_tmp_ff <= csm_tmp_valid || empty_msg ? csm_tmp : csm_tmp_ff; 
 
 // assign check_end = csm_tmp_valid;
 assign check_end    = /*baud_en &&*/ (state == ST_CHECK_CSM);
@@ -318,7 +333,9 @@ else if (state == ST_OPT)
     state <= byte_valid ? ST_LEN : state;
 
 else if (state == ST_LEN)
-    state <= byte_valid ? ST_DATA : state;    
+    state <= !byte_valid ? state   :
+              empty_msg  ? ST_CSM  :
+                           ST_DATA ;    
 
 else if (state == ST_DATA)
     state <= data_end ? ST_CSM : state;    
@@ -338,8 +355,8 @@ else
 
 
 
-assign o_opt = msg_opt;
-assign o_len = msg_len;
-
+assign o_opt  = msg_opt;
+assign o_len  = msg_len;
+assign o_data = useful_data;
 
 endmodule

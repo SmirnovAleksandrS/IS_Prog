@@ -8,8 +8,8 @@ module uart_tx
     input  wire                                RST,
 
     input  wire [FULL_DATA_SIZE - 1 : 0] full_data,
-    input  wire [     BYTE_SIZE - 1 : 0]       opt,
-    input  wire [     BYTE_SIZE - 1 : 0]       len,
+    // input  wire [     BYTE_SIZE - 1 : 0]       opt,
+    // input  wire [     BYTE_SIZE - 1 : 0]       len,
 
     input  wire                           in_valid,
     output wire                              ready,
@@ -25,8 +25,8 @@ module uart_tx
 /// fsm states
 localparam ST_NO_DATA  = 0;
 localparam ST_INIT     = 1;
-localparam ST_LEN      = 2;
-localparam ST_OPT      = 3;
+localparam ST_OPT      = 2;
+localparam ST_LEN      = 3;
 localparam ST_DATA     = 4;
 localparam ST_WAIT_CSM = 5;
 localparam ST_CSM      = 6;
@@ -173,6 +173,10 @@ assign in_byte_hshake = tx_byte_ready && next_b_valid;
 
 
 assign last_csm_bit = last_of_byte && (state == ST_WAIT_CSM);
+
+wire en;
+assign en = 1'b1;
+
 uart_byte_tx
 #(
     .BYTE_SIZE ( BYTE_SIZE )
@@ -281,16 +285,18 @@ if (RST)
     state <= ST_NO_DATA;
 
 else if (state == ST_NO_DATA)
-    state <= in_valid ? ST_INIT : state;
+    state <= in_hshake ? ST_INIT : state;
 
 else if (state == ST_INIT)
     state <= tx_byte_ready ? ST_LEN : state;
 
-else if (state == ST_LEN)
-    state <= tx_byte_ready ? ST_OPT : state;
-
 else if (state == ST_OPT)
     state <= tx_byte_ready ? ST_DATA : state;    
+
+else if (state == ST_LEN)
+    state <= !tx_byte_ready ? state       :
+              empty_msg     ? ST_WAIT_CSM :
+                              ST_OPT      ;
 
 else if (state == ST_DATA)
     state <= data_end ? ST_WAIT_CSM : state;    
@@ -309,7 +315,8 @@ else
 
 
 
-
+wire empty_msg;
+assign empty_msg = (state == ST_LEN) && (msg_len == 0) && tx_byte_ready;
 
 
 
