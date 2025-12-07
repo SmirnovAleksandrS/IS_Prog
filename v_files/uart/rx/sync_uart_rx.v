@@ -7,6 +7,8 @@ module sync_uart_rx
 )
 (   
     input  wire                           CLK,
+         (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                           RST,
     input  wire                           in_bit,
     input  wire                           baud_en,
@@ -184,6 +186,10 @@ always @(posedge CLK)
 if (RST)
     shift_val <= 1;
 
+
+else if (state == ST_CHECK_CSM)
+    shift_val <= 1;
+
 // else if (!baud_en)
 //     shift_val <= shift_val;
 
@@ -273,7 +279,7 @@ else
 
 
 
-assign csm_calc_en = baud_en && useful_in_bit && (state != ST_INIT) && (state != ST_CSM);
+assign csm_calc_en = baud_en && useful_in_bit && (state != ST_INIT) && (state != ST_CSM) && (state != ST_CHECK_CSM);
 
 crc_32
 #(
@@ -285,6 +291,7 @@ crc_32
     .RST       ( RST         ),
 
     .in_valid  ( csm_calc_en ),
+    .loc_rst   ( frame_end   ),
     .in_last   ( csm_last    ),
     .in_bit    ( in_bit      ),
 

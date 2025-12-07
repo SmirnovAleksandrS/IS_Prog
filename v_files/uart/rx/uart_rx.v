@@ -8,6 +8,8 @@ module uart_rx
 )
 (   
     input  wire                           CLK,
+         (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                           RST,
     input  wire                           in_bit,
 

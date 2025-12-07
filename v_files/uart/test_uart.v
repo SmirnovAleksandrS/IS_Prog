@@ -1,4 +1,4 @@
-module test_tx;
+module test_uart;
 
 
 localparam FULL_DATA_SIZE = 40;
@@ -19,9 +19,16 @@ reg clk2;
 
     always begin 
         #1 CLK      = ~CLK;
+        // #4 clk2     = !clk2;
     end
 
 
+always @(posedge CLK)
+    slow_clk_tmp <= !slow_clk_tmp;
+
+
+always @(posedge slow_clk_tmp)
+    slow_clk <= !slow_clk;
 
 
 initial begin
@@ -32,8 +39,8 @@ initial begin
     RST          <= 1;
 
 
-    full_data <= 40'h00_03_aa_bb_47;
-    // full_data <= 40'h01_00_00_00_00;
+    // full_data <= 40'h00_03_aa_bb_47;
+    full_data <= 40'h01_00_00_00_00;
     in_valid  <= 0;
 
 
@@ -48,7 +55,7 @@ uart_tx
 )
 uart_tx
 (
-    .CLK       ( CLK  ),
+    .CLK       ( slow_clk  ),
     .RST       ( RST       ),
     .full_data ( full_data ),
     .in_valid  ( in_valid  ),
@@ -58,12 +65,26 @@ uart_tx
 
 
 
+uart_rx
+#(  
+    .FREQ_COEF      (1               ),
+    .BYTE_SIZE     ( 1     )
+    // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
+)
+uart_rx
+(
+    .CLK       ( slow_clk        ),
+    .RST       ( RST        ),
+    .in_bit    ( out_bit    )
+);
+
+
 
 
 
     initial begin
 
-		$dumpfile("dump.vcd"); $dumpvars(0, test_tx);
+		$dumpfile("dump.vcd"); $dumpvars(0, test_uart);
         #46;
         RST <= 0;
         #29
@@ -74,19 +95,19 @@ uart_tx
 
         #3218;
         in_valid  <= 1;
-        // full_data <= 40'h00_02_aa_bb_47;
+        full_data <= 40'h00_02_aa_bb_47;
         #16;
         in_valid <= 0;
 
         #320;
         in_valid  <= 1;
-        // full_data <= 40'h00_01_aa_bb_47;
+        full_data <= 40'h00_01_aa_bb_47;
         #16;
         in_valid <= 0;
 
                 #5000;
         in_valid  <= 1;
-        // full_data <= 40'h00_00_aa_bb_47;
+        full_data <= 40'h00_00_aa_bb_47; 
         #16;
         in_valid <= 0;
 

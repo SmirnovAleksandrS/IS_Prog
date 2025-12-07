@@ -6,6 +6,8 @@ module crc_32
 
     input  wire                          CLK,
     input  wire                          RST,
+    input  wire                      loc_rst,
+
 
     input  wire                     in_valid,
     input  wire                      in_last,
@@ -35,9 +37,16 @@ always @(posedge CLK)
 if (RST) 
     crc_ff <= 32'hFFFFFFFF;
 
+else if (loc_rst)
+    crc_ff <= 32'hFFFFFFFF;
+
 else if (in_valid) 
     crc_ff <= xor_bit ? next_crc_1 : next_crc_2;
     
+else
+    crc_ff <= crc_ff;
+
+
 
 reg in_last_ff;
 reg in_last_ff_2;
@@ -48,14 +57,6 @@ if (RST)
 else
     in_last_ff <= in_last && in_valid;
 
-
-always @(posedge CLK)
-if (RST)
-    in_last_ff_2 <= 0;
-else
-    in_last_ff_2 <= in_last_ff ? 1 :
-                    out_valid  ? 0 :
-                      in_last_ff_2 ;
 
 
 

@@ -5,14 +5,21 @@ module uart_tx
 )
 (
     input  wire                                CLK,
+
+     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                                RST,
 
+(*MARK_DEBUG = "TRUE"*)
     input  wire [FULL_DATA_SIZE - 1 : 0] full_data,
     // input  wire [     BYTE_SIZE - 1 : 0]       opt,
     // input  wire [     BYTE_SIZE - 1 : 0]       len,
 
+(*MARK_DEBUG = "TRUE"*)
     input  wire                           in_valid,
+    (*MARK_DEBUG = "TRUE"*)
     output wire                              ready,
+    (*MARK_DEBUG = "TRUE"*)
     output wire                            out_bit     
 
 );
@@ -48,12 +55,17 @@ localparam CSM_SIZE = 32;
 
 
 /// fsm state reg
+(*MARK_DEBUG = "TRUE"*)
 reg [3 - 1 : 0] state;
 
 /// captured data
+(*MARK_DEBUG = "TRUE"*)
 reg [BYTE_SIZE        - 1 : 0]       msg_len;
+(*MARK_DEBUG = "TRUE"*)
 reg [BYTE_SIZE        - 1 : 0]       msg_opt;
+(*MARK_DEBUG = "TRUE"*)
 reg [USEFUL_DATA_SIZE - 1 : 0]   useful_data;
+
 reg [BYTE_SIZE        - 1 : 0] cur_data_byte;
 
 /// general ctrl signals
@@ -61,8 +73,16 @@ wire init_en;
 wire data_end; 
 wire final_byte;
 
+(*MARK_DEBUG = "TRUE"*)
 wire in_hshake;
+
+(*MARK_DEBUG = "TRUE"*)
 wire next_b_valid;
+(*MARK_DEBUG = "TRUE"*)
+wire tx_byte_ready;
+(*MARK_DEBUG = "TRUE"*)
+wire in_byte_hshake;
+
 wire last_of_byte;
 
 reg  out_bit_ff;
@@ -70,6 +90,7 @@ reg  out_bit_ff;
 /// interim data
 wire [USEFUL_DATA_SIZE - 1 : 0] shifted_useful_data;
 wire [BYTE_SIZE        - 1 : 0]            init_msg;
+(*MARK_DEBUG = "TRUE"*)
 wire [BYTE_SIZE        - 1 : 0]           next_byte;
 /// shift of long data for byte destribution
 reg [SHIFT_VAL_SIZE - 1 : 0] shift_val;
@@ -77,9 +98,7 @@ wire final_data_shift;
 wire final_csm_shift;
 
 /// SMTH WRONG HERE
-wire tx_byte_ready;
 wire new_bit_valid;
-wire in_byte_hshake;
 /// SMTH WRONG HERE
 
 
@@ -168,7 +187,7 @@ assign next_byte = ( state == ST_NO_DATA  )                        && in_hshake 
 
 
 // assign next_b_valid   = ((in_byte_hshake /*&& !data_end*/) || csm_valid) && (state != ST_NO_DATA) || in_hshake ;
-assign next_b_valid = (state != ST_NO_DATA) && (state != ST_WAIT_CSM) || csm_valid || in_hshake; 
+assign next_b_valid = (state != ST_WAIT_END) && (state != ST_NO_DATA) && (state != ST_WAIT_CSM) || csm_valid || in_hshake; 
 assign in_byte_hshake = tx_byte_ready && next_b_valid;
 
 
@@ -234,7 +253,7 @@ else
 ////////////////////////////////////////////////////////////
 
 
-assign csm_calc_en = useful_bit && (state != ST_INIT) && (state != ST_CSM);
+assign csm_calc_en = useful_bit && (state != ST_INIT) && (state != ST_CSM) && (state != ST_WAIT_END);
 
 assign final_csm_shift = (state == ST_CSM) && (shift_val == CSM_BYTES - 1);
 
@@ -246,6 +265,7 @@ crc_32
 (
     .CLK       ( CLK          ),
     .RST       ( RST          ),
+    .loc_rst   ( final_byte      ),
 
     .in_valid  ( csm_calc_en  ),
     // .in_last   ( data_end     ),
