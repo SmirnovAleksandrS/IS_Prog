@@ -15,6 +15,21 @@ reg len;
 reg in_valid;
 reg slow_clk_tmp;
 wire tx_ready;
+
+
+
+reg [1:0]en_cnt;
+wire clk_en;
+
+always @(posedge slow_clk)
+if (RST)
+    en_cnt <= 0;
+else 
+    en_cnt <= en_cnt + 1;
+
+assign clk_en = (en_cnt == 3);
+
+
 reg clk2;
 
     always begin 
@@ -55,8 +70,9 @@ uart_tx
 )
 uart_tx
 (
-    .CLK       ( slow_clk  ),
+    .CLK       ( slow_clk       ),
     .RST       ( RST       ),
+    .clk_en    ( clk_en    ),
     .full_data ( full_data ),
     .in_valid  ( in_valid  ),
     .ready     ( tx_ready  ),
@@ -67,13 +83,13 @@ uart_tx
 
 uart_rx
 #(  
-    .FREQ_COEF      (1               ),
+    .FREQ_COEF      (16               ),
     .BYTE_SIZE      ( BYTE_SIZE     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
 )
 uart_rx
 (
-    .CLK       ( slow_clk        ),
+    .CLK       ( CLK        ),
     .RST       ( RST        ),
     .in_bit    ( out_bit    )
 );

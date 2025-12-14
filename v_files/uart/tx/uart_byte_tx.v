@@ -14,7 +14,7 @@ module uart_byte_tx
 
     output wire                     last_bit,
     output wire                   out_useful,
-    output wire                    out_valid,
+    // output wire                    out_valid,
     output wire                        ready,
     output wire                        o_bit
 
@@ -40,9 +40,9 @@ reg [2 - 1 : 0] state;
 reg [BIT_CNT_SIZE - 1 : 0] bit_cnt;
 wire hshake;
 
-assign ready      = (state == ST_NO_DATA) || ((state == ST_DATA) && last_bit);
-assign out_valid  = ((state == ST_DATA) && last_bit);
-assign out_useful = (state == ST_DATA);
+assign ready      = ((state == ST_NO_DATA) || ((state == ST_DATA) && last_bit)) && en;
+// assign out_valid  =  (state == ST_DATA);
+assign out_useful = ( state == ST_DATA);
 
 assign hshake   = ready && in_valid;
 
@@ -53,6 +53,9 @@ always @(posedge CLK)
 if (RST)
     bit_cnt <= 0;
 
+else if (!en)
+    bit_cnt <= bit_cnt;
+    
 else if (state == ST_DATA)
     bit_cnt <= last_bit ? 0 : bit_cnt + 1;
 
@@ -76,6 +79,10 @@ assign o_bit = (state == ST_START  ) ? 1'b0 :
 always @(posedge CLK)
 if (RST)
     shift_data <= 1;
+
+else if (!en)
+    shift_data <= shift_data;
+
 else 
     shift_data <= hshake             ?          in_data  : 
                   (state == ST_DATA) ? (shift_data << 1) :
@@ -91,7 +98,7 @@ if (RST)
     state <= ST_NO_DATA;
 
 else if (!en)
-    state <= ST_NO_DATA;
+    state <= state;
 
 else if (state == ST_NO_DATA)
     state <= !hshake ? state    :

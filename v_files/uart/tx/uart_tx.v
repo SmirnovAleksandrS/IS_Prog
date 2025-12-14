@@ -5,10 +5,10 @@ module uart_tx
 )
 (
     input  wire                                CLK,
-
-     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
+    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                                RST,
+    input  wire                                clk_en,
 
 (*MARK_DEBUG = "TRUE"*)
     input  wire [FULL_DATA_SIZE - 1 : 0] full_data,
@@ -117,7 +117,7 @@ wire [BYTE_SIZE - 1 : 0] cur_csm_byte;
 ////////////////////////////////////////////////////////////
 
 assign ready  = (state == ST_NO_DATA);
-assign in_hshake = ready && in_valid;
+assign in_hshake = ready && in_valid && clk_en;
 
 always @(posedge CLK)
 if (RST) begin
@@ -187,14 +187,14 @@ assign next_byte = ( state == ST_NO_DATA  )                        && in_hshake 
 
 
 // assign next_b_valid   = ((in_byte_hshake /*&& !data_end*/) || csm_valid) && (state != ST_NO_DATA) || in_hshake ;
-assign next_b_valid = (state != ST_WAIT_END) && (state != ST_NO_DATA) && (state != ST_WAIT_CSM) || csm_valid || in_hshake; 
+assign next_b_valid = /*clk_en &&*/ (state != ST_WAIT_END) && (state != ST_NO_DATA) && (state != ST_WAIT_CSM) || csm_valid || in_hshake; 
 assign in_byte_hshake = tx_byte_ready && next_b_valid;
 
 
 assign last_csm_bit = last_of_byte && (state == ST_WAIT_CSM);
 
 wire en;
-assign en = 1'b1;
+assign en = clk_en;
 
 uart_byte_tx
 #(
@@ -213,7 +213,7 @@ uart_byte_tx
 
     .last_bit   ( last_of_byte  ),
     .out_useful ( useful_bit    ),
-    .out_valid  ( new_bit_valid ),
+    // .out_valid  ( new_bit_valid ),
     .o_bit      ( out_bit_slow  )
 );
 
@@ -222,7 +222,7 @@ always @(posedge CLK)
 if (RST)
     out_bit_ff <= 1;
 else 
-    out_bit_ff <= out_bit_slow;
+    out_bit_ff <= en ? out_bit_slow : out_bit_ff;
 
 
 assign out_bit = ((state == ST_CSM) || (state == ST_WAIT_END)) ? out_bit_slow : out_bit_ff;
@@ -253,7 +253,7 @@ else
 ////////////////////////////////////////////////////////////
 
 
-assign csm_calc_en = useful_bit && (state != ST_INIT) && (state != ST_CSM) && (state != ST_WAIT_END);
+assign csm_calc_en = clk_en && useful_bit && (state != ST_INIT) && (state != ST_CSM) && (state != ST_WAIT_END);
 
 assign final_csm_shift = (state == ST_CSM) && (shift_val == CSM_BYTES - 1);
 

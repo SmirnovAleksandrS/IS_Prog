@@ -135,9 +135,6 @@ always @(posedge CLK)
 if (RST)
     msg_len <= 0;
 
-// else if (!baud_en)
-//     msg_len <= msg_len;
-
 else if (state == ST_LEN)
     msg_len <= byte_valid ? cur_byte : msg_len ;
 
@@ -167,9 +164,6 @@ always @(posedge CLK)
 if (RST)
     msg_opt <= 0;
 
-// else if (!baud_en)
-//     msg_opt <= msg_opt;
-
 else if (state == ST_OPT)
     msg_opt <= byte_valid ? cur_byte : msg_opt ;
 
@@ -189,9 +183,6 @@ if (RST)
 
 else if (state == ST_CHECK_CSM)
     shift_val <= 1;
-
-// else if (!baud_en)
-//     shift_val <= shift_val;
 
 else if (state == ST_DATA)
     shift_val <= data_end   ?             1 :
@@ -224,8 +215,7 @@ always @(posedge CLK)
 if (RST)
     useful_data <= 0;
 
-// else if (!baud_en)
-//     useful_data <= useful_data;
+
 
 
 else if (state == ST_DATA)
@@ -239,16 +229,11 @@ else
 
 
 
+assign csm_last  = last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ) || empty_msg; /// end with data
+assign data_end  = (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
+assign frame_end = (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
 
 
-// assign csm_last = last_bit_in_byte && (state == ST_CSM ) && (shift_val == CSM_BYTE_NUM );  /// ends with csm
-
-assign csm_last  = /*baud_en && */ last_bit_in_byte && (state == ST_DATA ) && (shift_val == msg_len ) || empty_msg; /// end with data
-assign data_end  = /*baud_en && */ (state == ST_DATA) && byte_valid && (shift_val == msg_len      );
-assign frame_end = /*baud_en && */ (state == ST_CSM ) && byte_valid && (shift_val == CSM_BYTE_NUM );
-
-
-// assign msg_lost = (state == ST_INIT)
 
 ////////////////////////////////////////////////////////////
 /// receiving csm
@@ -257,9 +242,6 @@ assign frame_end = /*baud_en && */ (state == ST_CSM ) && byte_valid && (shift_va
 always @(posedge CLK)
 if (RST)
     csm <= 0;
-
-// else if (!baud_en)
-//     useful_data <= useful_data;
 
 else if (state == ST_INIT)
     csm <= 0;
@@ -303,9 +285,6 @@ always @(posedge CLK)
 if (RST)
     csm_tmp_ff <= 0;
 
-// else if (!baud_en)
-//     csm_tmp_ff <= csm_tmp_ff;
-
 else if (state == ST_INIT)
     csm_tmp_ff <= 0;
 
@@ -326,9 +305,6 @@ assign o_valid = csm_matching;
 always @(posedge CLK) 
 if (RST)
     state <= ST_INIT;
-
-// else if (!baud_en)
-//     state <= state;
 
 else if (msg_err)
     state <= ST_INIT;
