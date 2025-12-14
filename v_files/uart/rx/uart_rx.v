@@ -20,7 +20,8 @@ module uart_rx
 
 );
 
-localparam                                CNT_SIZE = $clog2(FREQ_COEF);
+
+localparam                                CNT_SIZE = (FREQ_COEF <= 1) ? 1 : $clog2(FREQ_COEF);
 ////////////////////////////////////////////////////////////////////////////
 
 reg [CNT_SIZE - 1 : 0]                    baud_cnt;
@@ -31,7 +32,7 @@ reg                                       sync_ff_2;
 
 /////////////////////////////////////////////////////////////////////////////
 
-assign baud_en = (baud_cnt == FREQ_COEF - 1);
+assign baud_en = (FREQ_COEF <= 1) ? 1 : (baud_cnt == FREQ_COEF - 1);
 
 always @(posedge CLK)
 if (RST)

@@ -39,8 +39,8 @@ initial begin
     RST          <= 1;
 
 
-    // full_data <= 40'h00_03_aa_bb_47;
-    full_data <= 40'h01_00_00_00_00;
+    full_data <= 40'h00_03_aa_bb_47;
+    // full_data <= 40'h01_00_00_00_00;
     in_valid  <= 0;
 
 
@@ -68,7 +68,7 @@ uart_tx
 uart_rx
 #(  
     .FREQ_COEF      (1               ),
-    .BYTE_SIZE     ( 1     )
+    .BYTE_SIZE      ( BYTE_SIZE     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
 )
 uart_rx
