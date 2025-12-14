@@ -11,6 +11,7 @@ module uart_rx
          (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                           RST,
+    input  wire                           clk_en,
     input  wire                           in_bit,
 
     output wire [BYTE_SIZE     - 1 : 0]   o_opt,
@@ -32,13 +33,13 @@ reg                                       sync_ff_2;
 
 /////////////////////////////////////////////////////////////////////////////
 
-assign baud_en = (FREQ_COEF <= 1) ? 1 : (baud_cnt == FREQ_COEF - 1);
+assign baud_en = (FREQ_COEF <= 1) ? clk_en : (baud_cnt == FREQ_COEF - 1) && clk_en;
 
 always @(posedge CLK)
 if (RST)
     baud_cnt <= 0;
 else 
-    baud_cnt <= baud_cnt + 1;
+    baud_cnt <= clk_en ? baud_cnt + 1 : baud_cnt;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -46,14 +47,14 @@ always @(posedge CLK)
 if (RST)
     sync_ff_1 <= 0;
 else 
-    sync_ff_1 <= in_bit;
+    sync_ff_1 <= clk_en ? in_bit : sync_ff_1;
 
 
 always @(posedge CLK)
 if (RST)
     sync_ff_2 <= 0;
 else 
-    sync_ff_2 <= sync_ff_1;
+    sync_ff_2 <= clk_en ? sync_ff_1 : sync_ff_2;
 
 /////////////////////////////////////////////////////////////////////////////
 

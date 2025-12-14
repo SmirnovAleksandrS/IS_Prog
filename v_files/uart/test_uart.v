@@ -83,7 +83,7 @@ uart_tx
 
 uart_rx
 #(  
-    .FREQ_COEF      (16               ),
+    .FREQ_COEF      (4               ),
     .BYTE_SIZE      ( BYTE_SIZE     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
 )
@@ -91,6 +91,7 @@ uart_rx
 (
     .CLK       ( CLK        ),
     .RST       ( RST        ),
+    .clk_en    ( clk_en     ),
     .in_bit    ( out_bit    )
 );
 
@@ -121,10 +122,10 @@ uart_rx
         #16;
         in_valid <= 0;
 
-                #5000;
+                #5010;
         in_valid  <= 1;
         full_data <= 40'h00_00_aa_bb_47; 
-        #16;
+        #160;
         in_valid <= 0;
 
 

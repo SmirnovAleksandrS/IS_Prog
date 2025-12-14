@@ -225,7 +225,8 @@ else
     out_bit_ff <= en ? out_bit_slow : out_bit_ff;
 
 
-assign out_bit = ((state == ST_CSM) || (state == ST_WAIT_END)) ? out_bit_slow : out_bit_ff;
+/// shit != 0    to give last bit time to go away
+assign out_bit = (((state == ST_CSM) && (shift_val != 0)) || (state == ST_WAIT_END)) ? out_bit_slow : out_bit_ff;
 
 
 
