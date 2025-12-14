@@ -14,6 +14,9 @@ module uart_rx
     input  wire                           clk_en,
     input  wire                           in_bit,
 
+    output wire                           o_msg_err,
+    output wire                           rx_started,
+
     output wire [BYTE_SIZE     - 1 : 0]   o_opt,
     output wire [BYTE_SIZE     - 1 : 0]   o_len,
     output wire [OUT_DATA_SIZE - 1 : 0]   o_data,
@@ -72,6 +75,9 @@ sync_uart_rx
     
     .in_bit        ( in_bit        ),
     .baud_en       ( baud_en       ),
+
+    .o_msg_err     ( o_msg_err     ),
+    .rx_started    ( rx_started    ),
 
     .o_opt         ( o_opt         ),
     .o_len         ( o_len         ),

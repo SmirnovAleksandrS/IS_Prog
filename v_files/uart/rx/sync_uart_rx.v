@@ -14,6 +14,10 @@ module sync_uart_rx
     input  wire                           baud_en,
 
 
+    output wire                           o_msg_err,
+    output wire                           rx_started,
+    
+
     output wire [BYTE_SIZE     - 1 : 0]   o_opt,
     output wire [BYTE_SIZE     - 1 : 0]   o_len,
     output wire [OUT_DATA_SIZE - 1 : 0]   o_data,
@@ -56,6 +60,7 @@ reg                                       byte_valid_ff;
 wire [FULL_DATA_SIZE - 1 : 0]             new_data_byte;
 wire [BYTE_SIZE      - 1 : 0]             cur_byte;
 reg  [SHIFT_SIZE     - 1 : 0]             shift_val;
+wire                                      data_end;
 
 /// data
 reg  [FULL_DATA_SIZE - 1 : 0]             useful_data;
@@ -281,6 +286,8 @@ crc_32
     .o_crc     ( csm_tmp     )
 );
 
+wire wrong_csm;
+
 always @(posedge CLK)
 if (RST)
     csm_tmp_ff <= 0;
@@ -292,11 +299,16 @@ else
     csm_tmp_ff <= csm_tmp_valid || empty_msg ? csm_tmp : csm_tmp_ff; 
 
 // assign check_end = csm_tmp_valid;
-assign check_end    = /*baud_en &&*/ (state == ST_CHECK_CSM);
-assign csm_matching = /*baud_en &&*/ (csm == csm_tmp_ff) && (state == ST_CHECK_CSM);
-assign msg_err      = /*baud_en &&*/ msg_lost /*|| (!csm_matching && csm_tmp_valid) */;
+assign check_end    = (state == ST_CHECK_CSM);
 
-assign o_valid = csm_matching;
+assign csm_matching = (csm == csm_tmp_ff) && (state == ST_CHECK_CSM);
+assign wrong_csm    = (csm != csm_tmp_ff) && (state == ST_CHECK_CSM);
+
+assign msg_err      =  msg_lost || wrong_csm ;
+
+assign o_valid      = csm_matching;
+assign o_msg_err    = msg_err;
+assign rx_started   = init_frame;
 
 ////////////////////////////////////////////////////////////
 /// data receiving logic fsm
