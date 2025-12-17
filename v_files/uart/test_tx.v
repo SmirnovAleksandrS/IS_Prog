@@ -4,8 +4,7 @@ module test_tx;
 localparam FULL_DATA_SIZE = 40;
 localparam BYTE_SIZE = 8;
 
-
-
+ertq
 reg CLK;
 reg slow_clk;
 reg RST;
@@ -16,6 +15,11 @@ reg in_valid;
 reg slow_clk_tmp;
 wire tx_ready;
 reg clk2;
+
+reg  [3 : 0] reg_num  = 4'b1100;
+wire [0 : 3] reversed = reg_num;
+
+assign 
 
     always begin 
         #1 CLK      = ~CLK;

@@ -17,6 +17,14 @@ reg slow_clk_tmp;
 wire tx_ready;
 reg clk2;
 
+reg  [3 : 0] reg_num  = 4'b1100;
+wire [0 : 3] reversed;
+
+genvar i;
+generate for (i = 0; i < 4 ; i = i + 1)
+    assign reversed[i] = reg_num[i];
+endgenerate
+
     always begin 
         #1 CLK      = ~CLK;
         // #4 clk2     = !clk2;
@@ -68,7 +76,7 @@ uart_tx
 uart_rx
 #(  
     .FREQ_COEF      (1               ),
-    .BYTE_SIZE     ( 1     )
+    .BYTE_SIZE     ( 8     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
 )
 uart_rx
