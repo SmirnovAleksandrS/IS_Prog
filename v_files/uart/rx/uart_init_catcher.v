@@ -6,17 +6,20 @@ module uart_init_catcher
 
     input  wire                        CLK,
     input  wire                        RST,
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                        en,
 
     input  wire [INIT_WIDTH - 1 : 0]   ref_init,
-
+(*MARK_DEBUG = "TRUE"*)
     input  wire                        in_bit,
     output wire                        out_init
 
 );
 
+(*MARK_DEBUG = "TRUE"*)
 
 reg  [INIT_WIDTH - 1 : 0]     shift_reg;
+(*MARK_DEBUG = "TRUE"*)
 wire [INIT_WIDTH - 1 : 0] new_shift_reg;
 
 assign new_shift_reg = {shift_reg[INIT_WIDTH-1 - 1 : 0], in_bit};

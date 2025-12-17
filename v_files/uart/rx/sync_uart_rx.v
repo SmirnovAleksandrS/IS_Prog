@@ -10,11 +10,15 @@ module sync_uart_rx
          (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                           RST,
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                           in_bit,
+    
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                           baud_en,
 
-
+(*MARK_DEBUG = "TRUE"*)
     output wire                           o_msg_err,
+    (*MARK_DEBUG = "TRUE"*)
     output wire                           rx_started,
     
 
@@ -44,6 +48,7 @@ localparam                                ST_CHECK_CSM   = 5;
 
 
 /// fsm switch ctrl
+(*MARK_DEBUG = "TRUE"*)
 reg [3 - 1 : 0]                           state;
 
 wire                                      init_en;
@@ -58,6 +63,7 @@ wire                                      byte_valid;
 reg                                       byte_valid_ff;
 
 wire [FULL_DATA_SIZE - 1 : 0]             new_data_byte;
+(*MARK_DEBUG = "TRUE"*)
 wire [BYTE_SIZE      - 1 : 0]             cur_byte;
 reg  [SHIFT_SIZE     - 1 : 0]             shift_val;
 wire                                      data_end;

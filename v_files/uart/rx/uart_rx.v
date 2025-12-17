@@ -11,7 +11,9 @@ module uart_rx
          (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                           RST,
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                           clk_en,
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                           in_bit,
 
     output wire                           o_msg_err,

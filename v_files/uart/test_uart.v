@@ -15,21 +15,6 @@ reg len;
 reg in_valid;
 reg slow_clk_tmp;
 wire tx_ready;
-
-
-
-reg [1:0]en_cnt;
-wire clk_en;
-
-always @(posedge slow_clk)
-if (RST)
-    en_cnt <= 0;
-else 
-    en_cnt <= en_cnt + 1;
-
-assign clk_en = (en_cnt == 3);
-
-
 reg clk2;
 
     always begin 
@@ -54,8 +39,8 @@ initial begin
     RST          <= 1;
 
 
-    full_data <= 40'h00_03_aa_bb_47;
-    // full_data <= 40'h01_00_00_00_00;
+    // full_data <= 40'h00_03_aa_bb_47;
+    full_data <= 40'h00_00_00_00_00;
     in_valid  <= 0;
 
 
@@ -70,9 +55,8 @@ uart_tx
 )
 uart_tx
 (
-    .CLK       ( slow_clk       ),
+    .CLK       ( slow_clk  ),
     .RST       ( RST       ),
-    .clk_en    ( clk_en    ),
     .full_data ( full_data ),
     .in_valid  ( in_valid  ),
     .ready     ( tx_ready  ),
@@ -83,15 +67,14 @@ uart_tx
 
 uart_rx
 #(  
-    .FREQ_COEF      (4               ),
-    .BYTE_SIZE      ( BYTE_SIZE     )
+    .FREQ_COEF      (1               ),
+    .BYTE_SIZE     ( 1     )
     // .MAX_MSG_LEN   ( MAX_MSG_LEN   ),
 )
 uart_rx
 (
-    .CLK       ( CLK        ),
+    .CLK       ( slow_clk           ),
     .RST       ( RST        ),
-    .clk_en    ( clk_en     ),
     .in_bit    ( out_bit    )
 );
 
@@ -122,10 +105,10 @@ uart_rx
         #16;
         in_valid <= 0;
 
-                #5010;
+                #5000;
         in_valid  <= 1;
         full_data <= 40'h00_00_aa_bb_47; 
-        #160;
+        #16;
         in_valid <= 0;
 
 

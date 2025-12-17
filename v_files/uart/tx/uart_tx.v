@@ -8,6 +8,7 @@ module uart_tx
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RST RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
     input  wire                                RST,
+        (*MARK_DEBUG = "TRUE"*)
     input  wire                                clk_en,
 
 
@@ -16,13 +17,34 @@ module uart_tx
     // input  wire [     BYTE_SIZE - 1 : 0]       len,
 
 
+    output wire [3 - 1 : 0]                   ila_state,
+    output wire  [BYTE_SIZE        - 1 : 0]   ila_msg_len,
+    output wire  [BYTE_SIZE        - 1 : 0]   ila_msg_opt,
+    output wire  [FULL_DATA_SIZE - 2 * BYTE_SIZE - 1 : 0]   ila_useful_data,
+    output wire  [BYTE_SIZE        - 1 : 0]   ila_cur_data_byte,
+    output wire                               ila_in_hshake,
+    output wire                               ila_in_byte_hshake,
+    output wire   [BYTE_SIZE        - 1 : 0]  ila_next_byte,
+
+    (*MARK_DEBUG = "TRUE"*)
     input  wire                           in_valid,
-    
+        (*MARK_DEBUG = "TRUE"*)
     output wire                              ready,
-    
+    (*MARK_DEBUG = "TRUE"*)
     output wire                            out_bit     
 
 );
+
+assign ila_state = state;
+assign ila_msg_len = msg_len;
+assign ila_msg_opt = msg_opt;
+assign ila_useful_data = useful_data;
+assign ila_cur_data_byte = cur_data_byte;
+assign ila_in_hshake = in_hshake;
+assign ila_in_byte_hshake = in_byte_hshake;
+assign ila_next_byte = next_byte;
+
+
 
 ////////////////////////////////////////////////////////////
 /// parameters definition
@@ -61,11 +83,8 @@ reg [3 - 1 : 0] state;
 /// captured data
 
 reg [BYTE_SIZE        - 1 : 0]       msg_len;
-
 reg [BYTE_SIZE        - 1 : 0]       msg_opt;
-
 reg [USEFUL_DATA_SIZE - 1 : 0]   useful_data;
-
 reg [BYTE_SIZE        - 1 : 0] cur_data_byte;
 
 /// general ctrl signals
@@ -75,12 +94,14 @@ wire final_byte;
 wire frame_end;
 wire out_bit_slow;
 
-
+    (*MARK_DEBUG = "TRUE"*)
 wire in_hshake;
+
 
 
 wire next_b_valid;
 wire tx_byte_ready;
+    (*MARK_DEBUG = "TRUE"*)
 wire in_byte_hshake;
 wire last_of_byte;
 reg  out_bit_ff;
@@ -89,6 +110,7 @@ reg  out_bit_ff;
 wire [USEFUL_DATA_SIZE - 1 : 0] shifted_useful_data;
 wire [BYTE_SIZE        - 1 : 0]            init_msg;
 
+    (*MARK_DEBUG = "TRUE"*)
 wire [BYTE_SIZE        - 1 : 0]           next_byte;
 /// shift of long data for byte destribution
 reg [SHIFT_VAL_SIZE - 1 : 0] shift_val;
